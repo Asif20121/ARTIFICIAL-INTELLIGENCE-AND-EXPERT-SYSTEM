@@ -1,188 +1,57 @@
-import math
-import copy
-
-max_player = 'X'
-min_player = 'O'
-
-
-def player(player):
-    #define player function
-    if player=='X':
-        player = 'O'
-    else:
-        player = 'X'
-        
-    return player
-
-
-def actions(state):
-    actionList = []
-    for r in range(0,3):
-        for c in range(0,3):
-            if state[r][c] == '-':
-                actionList.append((r,c))
-    return actionList
-
-
-def result(state, action, mark):            
-    state[action[0]][action[1]] = mark
-    return state
-
-def terminal(state):
-    
-    #Row and Column Check
-    for i in range(0,3):
-        if state[i][0] == state[i][1] == state[i][2] and state[i][0] != '-':
-            return True
-        elif state[0][i] == state[1][i] == state[2][i] and state[0][i] != '-':
-            return True
-    
-    #Diagonal Check
-    if  state[0][0] == state[1][1] == state[2][2] and state[0][0] != '-':
-        return True
-    elif state[0][2] == state[1][1] == state[2][0] and state[0][2] != '-':
-        return True
-    
-    #Draw Check
-    isTerminal = Truexx
-    for row in state:
-        for item in row:
-            if item == '-':
-                isTerminal = False
-    
-    return isTerminal
-    
-
-def utility(state):
-    player = ''
-    #Row and Column Check
-    for i in range(0,3):
-        if state[i][0] == state[i][1] == state[i][2] and state[i][0] != '-':
-            player = state[i][0]
-        elif state[0][i] == state[1][i] == state[2][i] and state[0][i] != '-':
-            player = state[0][i]
-    
-    #Diagonal Check
-    if  state[0][0] == state[1][1] == state[2][2] and state[0][0] != '-':
-        player = state[0][0]
-    elif state[0][2] == state[1][1] == state[2][0] and state[0][2] != '-':
-        player = state[0][2]
-  
-    
-    if player == 'X':
-        return 1
-    elif player == 'O':
-        return -1
-    
-    player = 'Draw'
-    #Draw Check
-    for row in state:
-        for item in row:
-            if item == '-':
-                player = 'Error::Not a Terminal State'
-    
-
-    if player == 'Draw':
-        return 0
-    else:
-        return player
-
-
-
-def max_value(state):
-    
-    if terminal(state):
-        return (utility(state), (-1,-1))
-        
-    v = -math.inf
-    nextAction = (-1,-1)
-    for action in actions(state):
-        temp_v, temp_a = min_value(result(state, action, max_player))
-        if v < temp_v:
-            v = temp_v
-            nextAction = action
-            
-    return (v, nextAction) 
-
-
-def min_value(state):
-
-    if terminal(state):
-        return (utility(state), (-1,-1))
-        
-    v = math.inf
-    nextAction = (-1,-1)
-    for action in actions(state):
-        temp_v, temp_s = max_value(result(state, action, min_player))
-        
-        if v > temp_v:
-            v = temp_v
-            nextAction = action
-
-    return (v, nextAction)
-
-
-
-def printBoard(board):
+def print_board(board):
     for row in board:
-        print(row)
-            
+        print(" | ".join(row))
+        print("-" * 5)
 
+def check_win(board, mark):
+    # Check rows, columns, and diagonals
+    for row in board:
+        if all(cell == mark for cell in row):
+            return True
+    for col in range(3):
+        if all(row[col] == mark for row in board):
+            return True
+    if all(board[i][i] == mark for i in range(3)) or all(board[i][2 - i] == mark for i in range(3)):
+        return True
+    return False
+
+def check_draw(board):
+    return all(cell != " " for row in board for cell in row)
+
+def get_move():
+    while True:
+        try:
+            row = int(input("Enter the row (0, 1, or 2): "))
+            col = int(input("Enter the column (0, 1, or 2): "))
+            if row in range(3) and col in range(3):
+                return row, col
+            else:
+                print("Invalid input. Please enter values between 0 and 2.")
+        except ValueError:
+            print("Invalid input. Please enter numerical values.")
 
 def tic_tac_toe():
+    board = [[" " for _ in range(3)] for _ in range(3)]
+    current_player = "X"
 
-    board = [['-','-','-'],
-             ['-','-','-'],
-             ['-','-','-']]
+    while True:
+        print_board(board)
+        print(f"Player {current_player}'s turn")
+        
+        row, col = get_move()
+        if board[row][col] == " ":
+            board[row][col] = current_player
+            if check_win(board, current_player):
+                print_board(board)
+                print(f"Player {current_player} wins!")
+                break
+            elif check_draw(board):
+                print_board(board)
+                print("The game is a draw!")
+                break
+            current_player = "O" if current_player == "X" else "X"
+        else:
+            print("Cell is already occupied. Try again.")
 
-
-
-    player = input("Choose a player[X/O]: ")
-    
-
-    if player == 'X' or player == 'x':
-        while True: 
-            printBoard(board)
-            winner = utility(board)
-            if winner == 1:
-                print('X is winner')
-                break
-            elif winner == -1:
-                print('O is winner')
-                break
-            elif winner == 0:
-                print('Game Draw')
-                break
-            r = int(input("Choose Row: "))
-            c = int(input("Choose column: "))
-            board[r][c] = 'X'
-            nextAction = min_value(copy.deepcopy(board))[1]
-            board[nextAction[0]][nextAction[1]] = 'O'
-            
-    elif player == 'O' or player == 'o':
-        board[1][1] = 'X'
-        while True:
-            printBoard(board)
-            winner = utility(board)
-            if winner == 1:
-                print('X is winner')
-                break
-            elif winner == -1:
-                print('O is winner')
-                break
-            elif winner == 0:
-                print('Game Draw')
-                break
-            r = int(input("Choose Row: "))
-            c = int(input("Choose column: "))
-            board[r][c] = 'O'
-            nextAction = max_value(copy.deepcopy(board))[1]
-            board[nextAction[0]][nextAction[1]] = 'X'    
-
-tic_tac_toe()
-    
-    
-    
-    
-    
-    
+if __name__ == "__main__":
+    tic_tac_toe()
